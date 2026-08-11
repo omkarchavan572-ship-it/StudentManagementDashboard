@@ -1,0 +1,17 @@
+{
+  "name": "student-management-dashboard",
+  "version": "1.0.0",
+  "description": "Mini Student Management Dashboard - MERN Stack SaaS Platform",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "start": "concurrently \"npm start --prefix server\" \"npm run dev --prefix client\"",
+    "seed": "npm run seed --prefix server",
+    "install:server": "npm install --prefix server",
+    "install:client": "npm install --prefix client",
+    "install-all": "npm install && npm run install:server && npm run install:client",
+    "build": "npm run build --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
