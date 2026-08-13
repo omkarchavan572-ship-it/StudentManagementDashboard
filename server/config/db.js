@@ -11,6 +11,7 @@ const connectDB = async () => {
     const connStr = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/student_management_db';
     
     mongoose.set('strictQuery', false);
+    mongoose.set('bufferCommands', false);
     
     const conn = await mongoose.connect(connStr, {
       serverSelectionTimeoutMS: 2000
