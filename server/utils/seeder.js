@@ -239,13 +239,16 @@ const seedData = async () => {
     console.log(`Created ${insertedExams.length} Exam Records.`);
 
     console.log('Database Seeding Completed Successfully! 🎉');
-    if (process.argv[2] === '-d') {
-      process.exit();
-    }
+    return true;
   } catch (error) {
     console.error(`Seeding error: ${error.message}`);
-    process.exit(1);
+    throw error;
   }
 };
 
-seedData();
+if (require.main === module) {
+  seedData().then(() => process.exit(0)).catch(() => process.exit(1));
+}
+
+module.exports = seedData;
+

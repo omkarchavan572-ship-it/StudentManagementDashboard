@@ -95,13 +95,24 @@ const StudentListPage = () => {
       if (editingStudent) {
         await api.put(`/students/${editingStudent._id}`, formData);
         showToast('Student profile updated successfully', 'success');
+        fetchStudents();
       } else {
         await api.post('/students', formData);
         showToast('New student added successfully', 'success');
+        // Reset filters & page to 1 so newly created student is immediately visible at the top
+        setSearch('');
+        setStatusFilter('All');
+        setCourseFilter('All');
+        setInstituteFilter('All');
+        setSortBy('newest');
+        if (page === 1 && !search && statusFilter === 'All' && courseFilter === 'All' && instituteFilter === 'All' && sortBy === 'newest') {
+          fetchStudents();
+        } else {
+          setPage(1);
+        }
       }
       setIsModalOpen(false);
       setEditingStudent(null);
-      fetchStudents();
     } catch (err) {
       console.error('Save error:', err);
       showToast(err.response?.data?.message || 'Error saving student profile', 'error');

@@ -31,6 +31,11 @@ const connectDB = async () => {
       process.exit(1);
     }
   }
+
+  // Load persistent snapshot if available
+  const { loadStore } = require('../utils/persistence');
+  await loadStore();
 };
 
 module.exports = connectDB;
+

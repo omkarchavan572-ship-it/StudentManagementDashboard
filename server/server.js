@@ -15,7 +15,10 @@ connectDB().then(async () => {
     const userCount = await User.countDocuments();
     if (userCount === 0) {
       console.log('No admin user found. Automatically triggering seed database...');
-      const seeder = require('./utils/seeder');
+      const seedData = require('./utils/seeder');
+      const { saveStore } = require('./utils/persistence');
+      await seedData();
+      await saveStore();
     }
   } catch (err) {
     console.log('Auto-seed check note:', err.message);
@@ -47,8 +50,12 @@ app.get('/api/health', (req, res) => {
 // Central Error Handler
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+module.exports = app;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
+}
+

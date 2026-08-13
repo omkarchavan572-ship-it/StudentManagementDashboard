@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const ExamRecord = require('../models/ExamRecord');
 const Student = require('../models/Student');
+const { saveStore } = require('../utils/persistence');
 
 // @desc    Get all exam records for a student
 // @route   GET /api/exams/student/:studentId
@@ -56,6 +57,7 @@ const addExamRecord = asyncHandler(async (req, res) => {
     remarks: remarks || (percentage >= 50 ? 'Good effort' : 'Needs improvement')
   });
 
+  await saveStore();
   res.status(201).json(examRecord);
 });
 
@@ -71,6 +73,7 @@ const deleteExamRecord = asyncHandler(async (req, res) => {
   }
 
   await ExamRecord.deleteOne({ _id: exam._id });
+  await saveStore();
   res.json({ message: 'Exam record deleted successfully', id: req.params.id });
 });
 

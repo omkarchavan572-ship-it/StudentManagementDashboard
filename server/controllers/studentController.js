@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const Student = require('../models/Student');
 const ExamRecord = require('../models/ExamRecord');
+const { saveStore } = require('../utils/persistence');
 
 // @desc    Get all students with search, filter, sort & pagination
 // @route   GET /api/students
@@ -167,6 +168,7 @@ const createStudent = asyncHandler(async (req, res) => {
     avatarUrl: avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`
   });
 
+  await saveStore();
   res.status(201).json(student);
 });
 
@@ -195,6 +197,7 @@ const updateStudent = asyncHandler(async (req, res) => {
   if (avatarUrl) student.avatarUrl = avatarUrl;
 
   const updatedStudent = await student.save();
+  await saveStore();
   res.json(updatedStudent);
 });
 
@@ -215,6 +218,7 @@ const deleteStudent = asyncHandler(async (req, res) => {
   // Delete student
   await Student.deleteOne({ _id: student._id });
 
+  await saveStore();
   res.json({ message: 'Student and associated academic records deleted successfully', id: req.params.id });
 });
 
