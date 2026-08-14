@@ -140,3 +140,100 @@ export const mergeExamsWithCache = (studentId, serverExams) => {
 
   return result;
 };
+
+// Dashboard Stats merge helper
+export const mergeDashboardWithCache = (serverDashboard) => {
+  if (!serverDashboard) return serverDashboard;
+
+  const customStudents = getCustomStudents();
+  const deletedStudentIds = getDeletedStudentIds();
+  const customExams = getCustomExams();
+  const deletedExamIds = getDeletedExamIds();
+
+  // If no cache present, return original
+  if (customStudents.length === 0 && deletedStudentIds.length === 0 && customExams.length === 0 && deletedExamIds.length === 0) {
+    return serverDashboard;
+  }
+
+  const metrics = { ...serverDashboard.metrics };
+  const charts = {
+    gradeDistribution: (serverDashboard.charts?.gradeDistribution || []).map((g) => ({ ...g })),
+    courseDistribution: (serverDashboard.charts?.courseDistribution || []).map((c) => ({ ...c })),
+    instituteDistribution: (serverDashboard.charts?.instituteDistribution || []).map((i) => ({ ...i }))
+  };
+  let recentExams = [...(serverDashboard.recentExams || [])];
+
+  // Process custom added students
+  customStudents.forEach((st) => {
+    if (deletedStudentIds.includes(st._id)) return;
+
+    // Check if student is newly added (e.g. starts with synth_ or rollNo not in default stats)
+    metrics.totalStudents += 1;
+    if (st.status === 'Active') metrics.activeStudents += 1;
+    else if (st.status === 'Inactive') metrics.inactiveStudents += 1;
+    else if (st.status === 'Graduated') metrics.graduatedStudents += 1;
+
+    // Update Course Distribution Chart
+    if (st.course) {
+      const courseIdx = charts.courseDistribution.findIndex((c) => c.name === st.course);
+      if (courseIdx >= 0) {
+        charts.courseDistribution[courseIdx].students += 1;
+      } else {
+        charts.courseDistribution.push({ name: st.course, students: 1 });
+      }
+    }
+
+    // Update Institute Distribution Chart
+    if (st.institute) {
+      const instIdx = charts.instituteDistribution.findIndex((i) => i.name === st.institute);
+      if (instIdx >= 0) {
+        charts.instituteDistribution[instIdx].count += 1;
+      } else {
+        charts.instituteDistribution.push({ name: st.institute, count: 1 });
+      }
+    }
+  });
+
+  // Process custom added exams
+  customExams.forEach((ex) => {
+    if (deletedExamIds.includes(ex._id)) return;
+
+    metrics.totalExams += 1;
+    if (ex.passStatus === 'Pass') metrics.passedExams += 1;
+    else metrics.failedExams += 1;
+
+    // Update Grade Distribution Chart
+    if (ex.grade) {
+      const gradeIdx = charts.gradeDistribution.findIndex((g) => g.grade === ex.grade);
+      if (gradeIdx >= 0) {
+        charts.gradeDistribution[gradeIdx].count += 1;
+      } else {
+        charts.gradeDistribution.push({ grade: ex.grade, count: 1 });
+      }
+    }
+
+    // Add to recent exams feed
+    recentExams.unshift({
+      _id: ex._id,
+      subject: ex.subject || 'Academic Assessment',
+      examName: ex.examName || 'Assessment',
+      scoreObtained: ex.scoreObtained,
+      totalMarks: ex.totalMarks,
+      grade: ex.grade,
+      passStatus: ex.passStatus,
+      student: { name: 'Custom Student', rollNo: 'STU' }
+    });
+  });
+
+  // Recalculate pass rate
+  if (metrics.totalExams > 0) {
+    metrics.overallPassRate = Number(((metrics.passedExams / metrics.totalExams) * 100).toFixed(1));
+  }
+
+  return {
+    ...serverDashboard,
+    metrics,
+    charts,
+    recentExams: recentExams.slice(0, 5)
+  };
+};

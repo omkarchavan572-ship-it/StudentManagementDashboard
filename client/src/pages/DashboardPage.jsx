@@ -28,6 +28,7 @@ import {
 import api from '../services/api';
 import StatCard from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
+import { mergeDashboardWithCache } from '../services/storageCache';
 
 const DashboardPage = () => {
   const [data, setData] = useState(null);
@@ -40,11 +41,17 @@ const DashboardPage = () => {
     setError('');
     try {
       const response = await api.get('/dashboard/stats');
-      setData(response.data);
+      const mergedData = mergeDashboardWithCache(response.data);
+      setData(mergedData);
     } catch (err) {
       console.error('Failed to load dashboard stats:', err);
-      setError('Failed to fetch dashboard statistics from server.');
-      showToast('Error connecting to backend server', 'error');
+      const fallbackMerged = mergeDashboardWithCache(null);
+      if (fallbackMerged) {
+        setData(fallbackMerged);
+      } else {
+        setError('Failed to fetch dashboard statistics from server.');
+        showToast('Error connecting to backend server', 'error');
+      }
     } finally {
       setLoading(false);
     }
