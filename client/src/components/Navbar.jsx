@@ -25,7 +25,7 @@ const Navbar = ({ toggleSidebar }) => {
             </div>
             <div>
               <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-                Edu<span className="text-brand-600 dark:text-brand-400">Pulse</span>
+                Scholar<span className="text-brand-600 dark:text-brand-400">Hub</span>
               </span>
               <span className="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 rounded-full border border-brand-200 dark:border-brand-800">
                 SaaS Admin

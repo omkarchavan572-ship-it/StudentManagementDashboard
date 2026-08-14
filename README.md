@@ -1,4 +1,4 @@
-# EduPulse | Mini Student Management Dashboard (MERN Stack)
+# ScholarHub | Mini Student Management Dashboard (MERN Stack)
 
 A modern, responsive educational SaaS dashboard for managing students, academic examination records, analytics, and admin authentication built with **MongoDB, Express.js, React.js, and Node.js**.
 

@@ -82,7 +82,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/50">
               <div className="flex items-center gap-2 text-brand-600 dark:text-brand-400 font-semibold text-xs mb-1">
                 <Award className="w-4 h-4" />
-                <span>EduPulse Academic v1.0</span>
+                <span>ScholarHub Academic v1.0</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                 Empowering administrators with real-time student insights, performance metrics, and course tracking.

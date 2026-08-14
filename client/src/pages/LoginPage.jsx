@@ -79,7 +79,7 @@ const LoginPage = () => {
           </div>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            Edu<span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">Pulse</span>
+            Scholar<span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">Hub</span>
           </h1>
           <p className="mt-1 text-xs text-slate-500 font-medium">
             Student Management & Institutional Analytics
