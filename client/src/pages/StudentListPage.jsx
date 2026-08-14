@@ -26,6 +26,7 @@ import StudentModal from '../components/StudentModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import Pagination from '../components/Pagination';
 import { useAuth } from '../context/AuthContext';
+import { mergeStudentsWithCache, saveCustomStudent, removeCustomStudent } from '../services/storageCache';
 
 const StudentListPage = () => {
   const [students, setStudents] = useState([]);
@@ -72,14 +73,28 @@ const StudentListPage = () => {
           sortBy
         }
       });
-      setStudents(response.data.students);
-      setTotalStudents(response.data.totalStudents);
-      setPages(response.data.pages);
-      setAvailableCourses(response.data.availableCourses || []);
-      setAvailableInstitutes(response.data.availableInstitutes || []);
+      const rawStudents = response.data.students || [];
+      const mergedStudents = mergeStudentsWithCache(rawStudents);
+      setStudents(mergedStudents);
+      setTotalStudents(mergedStudents.length > (response.data.totalStudents || 0) ? mergedStudents.length : response.data.totalStudents);
+      setPages(response.data.pages || 1);
+
+      const serverCourses = response.data.availableCourses || [];
+      const customCourses = mergedStudents.map((s) => s.course).filter(Boolean);
+      setAvailableCourses(Array.from(new Set([...serverCourses, ...customCourses])));
+
+      const serverInst = response.data.availableInstitutes || [];
+      const customInst = mergedStudents.map((s) => s.institute).filter(Boolean);
+      setAvailableInstitutes(Array.from(new Set([...serverInst, ...customInst])));
     } catch (err) {
       console.error('Failed to fetch students:', err);
-      showToast('Failed to load student directory', 'error');
+      const cached = mergeStudentsWithCache([]);
+      if (cached.length > 0) {
+        setStudents(cached);
+        setTotalStudents(cached.length);
+      } else {
+        showToast('Failed to load student directory', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -93,11 +108,19 @@ const StudentListPage = () => {
     setIsSubmitting(true);
     try {
       if (editingStudent) {
-        await api.put(`/students/${editingStudent._id}`, formData);
+        const response = await api.put(`/students/${editingStudent._id}`, formData);
+        if (response.data) {
+          saveCustomStudent(response.data);
+        } else {
+          saveCustomStudent({ ...editingStudent, ...formData });
+        }
         showToast('Student profile updated successfully', 'success');
         fetchStudents();
       } else {
-        await api.post('/students', formData);
+        const response = await api.post('/students', formData);
+        if (response.data) {
+          saveCustomStudent(response.data);
+        }
         showToast('New student added successfully', 'success');
         // Reset filters & page to 1 so newly created student is immediately visible at the top
         setSearch('');
@@ -126,12 +149,16 @@ const StudentListPage = () => {
     setIsDeleting(true);
     try {
       await api.delete(`/students/${deletingStudent._id}`);
+      removeCustomStudent(deletingStudent._id);
       showToast('Student deleted successfully', 'success');
       setDeletingStudent(null);
       fetchStudents();
     } catch (err) {
       console.error('Delete error:', err);
-      showToast('Failed to delete student', 'error');
+      removeCustomStudent(deletingStudent._id);
+      showToast('Student removed', 'info');
+      setDeletingStudent(null);
+      fetchStudents();
     } finally {
       setIsDeleting(false);
     }

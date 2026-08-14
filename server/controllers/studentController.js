@@ -123,7 +123,8 @@ const getStudents = asyncHandler(async (req, res) => {
 
   try {
     let count = await Student.countDocuments(query);
-    if (count === 0 && !req.query.search) {
+    const totalUnfiltered = await Student.countDocuments({});
+    if (totalUnfiltered === 0) {
       try {
         const seedData = require('../utils/seeder');
         await seedData();

@@ -175,11 +175,29 @@ const examSubjects = [
   'Cloud Computing'
 ];
 
-const seedData = async () => {
+const seedData = async (force = false) => {
   try {
     await connectDB();
 
-    console.log('Clearing existing database records...');
+    const existingStudentCount = await Student.countDocuments();
+    const existingUserCount = await User.countDocuments();
+
+    // If records exist and force is false, do not wipe user-added data
+    if (!force && existingStudentCount > 0) {
+      console.log(`Database already contains ${existingStudentCount} students. Skipping re-seeding to protect user data.`);
+      if (existingUserCount === 0) {
+        await User.create({
+          name: 'Dr. Sarah Jenkins (Admin)',
+          email: 'admin@edu.com',
+          password: 'admin123',
+          role: 'admin'
+        });
+        console.log('Created missing Admin User.');
+      }
+      return true;
+    }
+
+    console.log('Clearing existing database records for seed...');
     await User.deleteMany();
     await Student.deleteMany();
     await ExamRecord.deleteMany();

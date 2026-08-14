@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.62.4",
     "axios": "^1.6.8",
     "clsx": "^2.1.0",
     "lucide-react": "^0.368.0",

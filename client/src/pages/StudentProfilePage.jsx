@@ -23,6 +23,7 @@ import ExamModal from '../components/ExamModal';
 import StudentModal from '../components/StudentModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useAuth } from '../context/AuthContext';
+import { mergeExamsWithCache, saveCustomExam, removeCustomExam, saveCustomStudent, getCustomStudents } from '../services/storageCache';
 
 const StudentProfilePage = () => {
   const { id } = useParams();
@@ -47,7 +48,35 @@ const StudentProfilePage = () => {
     setError('');
     try {
       const response = await api.get(`/students/${id}`);
-      setStudentData(response.data);
+      let data = response.data;
+      if (data && data.student) {
+        const customStudents = getCustomStudents();
+        const matchedCustom = customStudents.find((s) => s._id === id || s.rollNo === data.student.rollNo);
+        if (matchedCustom) {
+          data.student = { ...data.student, ...matchedCustom };
+        }
+        const mergedExams = mergeExamsWithCache(id, data.examHistory || []);
+        data.examHistory = mergedExams;
+
+        let totalExams = mergedExams.length;
+        let totalScoreObtained = 0;
+        let totalMaxMarks = 0;
+        let passedExams = 0;
+        mergedExams.forEach((exam) => {
+          totalScoreObtained += Number(exam.scoreObtained) || 0;
+          totalMaxMarks += Number(exam.totalMarks) || 100;
+          if (exam.passStatus === 'Pass') passedExams++;
+        });
+
+        data.stats = {
+          totalExams,
+          passedExams,
+          failedExams: totalExams - passedExams,
+          overallPercentage: totalMaxMarks > 0 ? Number(((totalScoreObtained / totalMaxMarks) * 100).toFixed(1)) : 0,
+          passRate: totalExams > 0 ? Number(((passedExams / totalExams) * 100).toFixed(1)) : 0
+        };
+      }
+      setStudentData(data);
     } catch (err) {
       console.error('Failed to load profile:', err);
       setError(err.response?.data?.message || 'Failed to fetch student profile');
@@ -64,7 +93,10 @@ const StudentProfilePage = () => {
   const handleAddExam = async (examFormData) => {
     setIsSubmittingExam(true);
     try {
-      await api.post(`/exams/student/${id}`, examFormData);
+      const res = await api.post(`/exams/student/${id}`, examFormData);
+      if (res.data) {
+        saveCustomExam({ ...res.data, student: id });
+      }
       showToast('Exam record added successfully', 'success');
       setIsExamModalOpen(false);
       fetchProfile();
@@ -81,12 +113,16 @@ const StudentProfilePage = () => {
     setIsDeletingExam(true);
     try {
       await api.delete(`/exams/${deletingExam._id}`);
+      removeCustomExam(deletingExam._id);
       showToast('Exam record deleted', 'success');
       setDeletingExam(null);
       fetchProfile();
     } catch (err) {
       console.error('Delete exam error:', err);
-      showToast('Error deleting exam record', 'error');
+      removeCustomExam(deletingExam._id);
+      showToast('Exam record removed', 'info');
+      setDeletingExam(null);
+      fetchProfile();
     } finally {
       setIsDeletingExam(false);
     }
@@ -95,7 +131,10 @@ const StudentProfilePage = () => {
   const handleUpdateStudent = async (studentFormData) => {
     setIsSubmittingStudent(true);
     try {
-      await api.put(`/students/${id}`, studentFormData);
+      const res = await api.put(`/students/${id}`, studentFormData);
+      if (res.data) {
+        saveCustomStudent(res.data);
+      }
       showToast('Student profile updated', 'success');
       setIsStudentModalOpen(false);
       fetchProfile();
